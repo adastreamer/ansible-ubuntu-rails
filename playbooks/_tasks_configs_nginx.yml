@@ -1,0 +1,39 @@
+- name: Copy Nginx Root Config Files
+  register: nginx_root_configs
+  become: yes
+  copy:
+    src: "{{ item }}"
+    dest: /etc/nginx/
+    mode: 0640
+    owner: exchanger
+  with_fileglob:
+    - ../files/nginx/etc/nginx/*
+
+- name: Copy Nginx "conf.d" Config Files
+  register: nginx_d_configs
+  become: yes
+  copy:
+    src: "{{ item }}"
+    dest: /etc/nginx/conf.d/
+    mode: 0640
+    owner: exchanger
+  with_fileglob:
+    - ../files/nginx/etc/nginx/conf.d/*
+
+- name: Copy Nginx "sites-available" Config Files
+  register: nginx_sites_available_configs
+  become: yes
+  copy:
+    src: "{{ item }}"
+    dest: /etc/nginx/sites-available/
+    mode: 0640
+    owner: exchanger
+  with_fileglob:
+    - ../files/nginx/etc/nginx/sites-available/*
+
+- name: Restart Nginx
+  when: nginx_root_configs.changed or nginx_d_configs.changed or nginx_sites_available_configs.changed
+  become: yes
+  service:
+    name: nginx
+    state: reloaded

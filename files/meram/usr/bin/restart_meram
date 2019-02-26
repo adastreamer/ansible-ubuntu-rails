@@ -1,0 +1,51 @@
+#!/bin/bash
+
+echo "Start meram rails application updating process"
+APP_DIR=/home/exchanger/meram
+CONF_DIR="/home/exchanger/config"
+UPSTREAM_CONFIG_FILE="${CONF_DIR}/MERAM_UPSTREAM_SERVERS"
+APP_PIDS_DIR=/var/run/meram
+PORT1=4401
+PORT2=4402
+
+echo "Check for currently running app"
+echo "Determine if ${PORT1} port is listening"
+#RC=`ss -lnt src :${PORT1} | tail -n+2 | wc -l`
+PORT=$(cat ${CONF_DIR}/MERAM_PORT)
+if [ "$PORT" = "$PORT1" ]; then
+  echo "TCP port ${PORT1} is listening, try to run new app on port ${PORT2}"
+  PORT=$PORT1
+  NEW_PORT=$PORT2
+else
+  echo "TCP port ${PORT1} is not listening, try to run new app on it"
+  PORT=$PORT2
+  NEW_PORT=$PORT1
+fi
+
+echo "Ensure PID directory is exists"
+sudo mkdir -p ${APP_PIDS_DIR}
+sudo chown root: ${APP_PIDS_DIR}
+sudo chmod 777 ${APP_PIDS_DIR}
+
+echo "Starting new process on port ${NEW_PORT}"
+cd $APP_DIR
+/bin/bash -l -i -c "cd $APP_DIR && rails s -e production -P $APP_PIDS_DIR/$NEW_PORT.pid -p $NEW_PORT -d"
+
+echo "Waiting"
+sleep 3
+
+echo "Killing old process"
+CURRENT_PID_FILE=$APP_PIDS_DIR/$PORT.pid
+if [ -f ${CURRENT_PID_FILE} ]; then
+  echo "Found old PID file ${CURRENT_PID_FILE}"
+  CURRENT_PID=$(cat $CURRENT_PID_FILE)
+  kill -9 $CURRENT_PID
+else
+  echo "Old PID file ${CURRENT_PID_FILE} not found, old process won't be killed"
+fi
+
+echo "$(date +%s%N) Updating Nginx config and reloading Nginx"
+echo "Write upstream servers info to ${UPSTREAM_CONFIG_FILE}"
+echo -e "server 127.0.0.1:$NEW_PORT;\n" > $UPSTREAM_CONFIG_FILE
+echo -e "$NEW_PORT" > ${CONF_DIR}/MERAM_PORT
+sudo nginx -s reload

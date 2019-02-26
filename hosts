@@ -1,0 +1,2 @@
+[meram]
+exchanger ansible_ssh_host=52.174.195.108 ansible_ssh_user=exchanger

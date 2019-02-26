@@ -1,0 +1,42 @@
+- hosts: meram
+  gather_facts: no
+
+  tasks:
+    - name: Add Ruby Repo
+      become: yes
+      apt_repository:
+        repo: ppa:brightbox/ruby-ng
+        state: present
+        update_cache: true
+
+    - name: Remove Ruby
+      become: yes
+      apt: name=ruby state=absent
+
+    - name: Remove Ruby Full
+      become: yes
+      apt: name=ruby-full state=absent
+
+    - name: Installs all required software
+      become: yes
+      apt:
+        pkg: [
+          'socat',
+          'libxml2-dev',
+          'zlib1g-dev',
+          'libmysqlclient-dev',
+          'nginx',
+          'htop',
+          'imagemagick',
+          'ruby2.4',
+          'ruby2.4-dev',
+          'postgresql',
+          'postgresql-contrib',
+          'libpq-dev',
+          'nginx',
+          'postfix',
+          'socat',
+          'mailutils',
+          'opendkim',
+          'opendkim-tools'
+        ]

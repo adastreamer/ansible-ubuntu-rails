@@ -1,0 +1,7 @@
+- hosts: etlgr
+  gather_facts: no
+  tasks:
+    - include: _tasks_configs_nginx.yml
+    - include: _tasks_configs_postfix.yml
+    - include: _tasks_configs_opendkim.yml
+    - include: _tasks_configs_meram.yml

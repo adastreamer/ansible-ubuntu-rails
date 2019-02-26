@@ -1,0 +1,16 @@
+[Unit]
+Description=Rails HTTP Server
+After=network.target
+
+[Service]
+Type=forking
+
+User=exchanger
+Group=exchanger
+ExecStart=/usr/bin/restart_meram
+ExecStop=
+
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,55 @@
+- name: Create Meram Web Config Directory
+  become: yes
+  file:
+    path: /home/mailer/config
+    state: directory
+    mode: 0755
+    owner: exchanger
+
+- name: Copy Meram Service Executable
+  register: meram_usr_bin_executable
+  become: yes
+  copy:
+    src: "../files/meram/usr/bin/restart_meram"
+    dest: /usr/bin/restart_meram
+    mode: 0755
+    owner: exchanger
+
+- name: Copy Meram Systemd script
+  become: yes
+  copy:
+    src: "../files/meram/etc/systemd/system/meram.service"
+    dest: /etc/systemd/system/meram.service
+    mode: 0644
+    owner: root
+
+- name: Restart Meram
+  when: meram_usr_bin_executable.changed
+  become: yes
+  service:
+    name: meram
+    state: restarted
+
+- name: Ensure Meram Systemd sidekiq and rails service units
+  become: yes
+  copy:
+    src: "../files/meram/etc/systemd/system/{{ item }}"
+    dest: "/etc/systemd/system/{{ item }}"
+    mode: 0644
+    owner: root
+  loop:
+    - meram.service
+
+- name: Daemon-reload systemctl to ensure new services configurations
+  become: yes
+  systemd:
+    daemon-reload: yes
+
+- name: Enable and start systemd services
+  become: yes
+  systemd:
+    name: "{{ item }}"
+    enabled: yes
+    state: started
+  loop:
+    - meram.service
